@@ -1,0 +1,119 @@
+/* Global styles */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 1em;
+    padding: 0;
+    background-image: url('background_login.png');
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+h1 {
+    font-family: 'Impact', fantasy;
+    text-transform: uppercase;
+    letter-spacing: .2rem;
+  -webkit-text-stroke: 1px #11BBBC;
+   text-shadow:
+       3px 3px 0 #000,
+     -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+       1px 1px 0 #000;
+    text-align: center;
+    color: white;
+    font-size: 36px;
+    margin-top: 30px;
+}
+
+/* Login Section */
+#login-section {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #CBF4F8;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 2mm ridge #11BBBC;
+}
+
+#login-section label {
+    font-size: 18px;
+    color: #0d4043;
+    margin-bottom: 10px;
+    display: block;
+}
+
+#user-id {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+#submit-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #0d4043;
+    color: white;
+    border: 2mm ridge #11BBBC;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#submit-button:hover {
+    background-color: #0d4043;
+    border: 2mm ridge mediumspringgreen;
+}
+
+/* Dashboard Content */
+#dashboard-content {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #feffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 2mm ridge #11BBBC;
+}
+
+#logout-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+#logout-button {
+    padding: 10px 20px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#logout-button:hover {
+    background-color: #c0392b;
+}
+
+/* Data Table */
+.DashTable_row {
+    background-color: #ecf0f1;
+}
+
+.DashTable_row:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Dropdown */
+#verb-filter {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
