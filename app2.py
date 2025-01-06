@@ -130,7 +130,7 @@ def prepare_score_data(avg_score_by_level, all_levels):
     return sorted_scores
 
 app = dash.Dash(__name__)
-app.title = "Tableau de bord avec connexion"
+app.title = "Tableau de bord avec vue alternée"
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -145,21 +145,23 @@ app.layout = html.Div([
     html.Div([
         html.Div([
             html.Button("Déconnexion", id='logout-button', n_clicks=0, className="logout-button"),
+            html.Button("Basculer la vue", id='toggle-view-button', n_clicks=0, className="toggle-view-button"),
             html.H1("Tableau de bord", className='dashboard-title'),
-            html.Div(id='dashboard-content')
-        ])
+        ]),
+        html.Div(id='graphs-view', style={'display': 'block'}),
+        html.Div(id='table-view', style={'display': 'none'})
     ], id='dashboard-page', style={'display': 'none'})
 ])
 
 @app.callback(
-    [Output('login-page', 'style'), Output('dashboard-page', 'style'), Output('login-error', 'children'), Output('dashboard-content', 'children')],
+    [Output('login-page', 'style'), Output('dashboard-page', 'style'), Output('login-error', 'children'), Output('graphs-view', 'children'), Output('table-view', 'children')],
     [Input('login-button', 'n_clicks'), Input('logout-button', 'n_clicks')],
     [State('input-identifier', 'value')]
 )
 def manage_login(n_login, n_logout, identifier):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return {'display': 'block'}, {'display': 'none'}, '', ''
+        return {'display': 'block'}, {'display': 'none'}, '', '', ''
 
     if ctx.triggered[0]['prop_id'].startswith('login-button'):
         if identifier and identifier.strip():
@@ -189,7 +191,7 @@ def manage_login(n_login, n_logout, identifier):
                     labels={"Mission Level": "Niveau de Mission", "Nombre d'essai": "Nombre d'Essais"}
                 )
 
-                content = html.Div([
+                graphs = html.Div([
                     dcc.Graph(id='score-evolution', figure=fig_score_evolution),
                     dcc.Graph(id='time-spent-graph', figure=px.bar(
                         time_spent,
@@ -197,32 +199,44 @@ def manage_login(n_login, n_logout, identifier):
                         title="Temps passé par niveau",
                         labels={"Mission Level": "Niveau de Mission", "Time Spent (min)": "Temps Passé (min)"}
                     )),
-                    dcc.Graph(id='attempts-graph', figure=fig_attempts),
-                    dash_table.DataTable(
-                        id='progress-table',
-                        columns=[
-                            {"name": "Mission Level", "id": "Mission Level"},
-                            {"name": "Time Spent (min)", "id": "Time Spent (min)"},
-                            {"name": "Score", "id": "Score"},
-                            {"name": "Verb", "id": "Verb"},
-                            {"name": "Actor", "id": "Actor"},
-                            {"name": "Nombre d'essai", "id": "Nombre d'essai"}
-                        ],
-                        data=df.to_dict('records'),
-                        style_table={'height': '400px', 'overflowY': 'auto'},
-                        style_cell={'textAlign': 'center', 'padding': '10px'}
-                    )
+                    dcc.Graph(id='attempts-graph', figure=fig_attempts)
                 ])
-                return {'display': 'none'}, {'display': 'block'}, '', content
+
+                table = dash_table.DataTable(
+                    id='progress-table',
+                    columns=[
+                        {"name": "Mission Level", "id": "Mission Level"},
+                        {"name": "Time Spent (min)", "id": "Time Spent (min)"},
+                        {"name": "Score", "id": "Score"},
+                        {"name": "Verb", "id": "Verb"},
+                        {"name": "Actor", "id": "Actor"},
+                        {"name": "Nombre d'essai", "id": "Nombre d'essai"}
+                    ],
+                    data=df.to_dict('records'),
+                    style_table={'height': '400px', 'overflowY': 'auto'},
+                    style_cell={'textAlign': 'center', 'padding': '10px'}
+                )
+
+                return {'display': 'none'}, {'display': 'block'}, '', graphs, table
             except Exception as e:
-                return {'display': 'block'}, {'display': 'none'}, "Identifiant invalide.", ''
+                return {'display': 'block'}, {'display': 'none'}, "Identifiant invalide.", '', ''
         else:
-            return {'display': 'block'}, {'display': 'none'}, "Veuillez entrer un identifiant.", ''
+            return {'display': 'block'}, {'display': 'none'}, "Veuillez entrer un identifiant.", '', ''
 
     if ctx.triggered[0]['prop_id'].startswith('logout-button'):
-        return {'display': 'block'}, {'display': 'none'}, '', ''
+        return {'display': 'block'}, {'display': 'none'}, '', '', ''
 
-    return {'display': 'block'}, {'display': 'none'}, '', ''
+    return {'display': 'block'}, {'display': 'none'}, '', '', ''
+
+@app.callback(
+    [Output('graphs-view', 'style'), Output('table-view', 'style')],
+    [Input('toggle-view-button', 'n_clicks')]
+)
+def toggle_view(n_clicks):
+    if n_clicks % 2 == 0:
+        return {'display': 'block'}, {'display': 'none'}
+    else:
+        return {'display': 'none'}, {'display': 'block'}
 
 if __name__ == '__main__':
     app.run_server(debug=True)
