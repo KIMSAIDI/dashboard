@@ -129,12 +129,14 @@ def prepare_score_data(avg_score_by_level, all_levels):
     sorted_scores = dict(sorted(scores_with_zeros.items(), key=lambda item: item[0]))
     return sorted_scores
 
-app = dash.Dash(__name__)
+
+app = dash.Dash(__name__, suppress_callback_exceptions=True)
 app.title = "Tableau de bord avec vue alternée"
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
 
+    # Login Page
     html.Div([
         html.H2("Connexion", className="login-title"),
         dcc.Input(id='input-identifier', type='text', placeholder='Entrez votre identifiant', className="login-input"),
@@ -142,6 +144,7 @@ app.layout = html.Div([
         html.Div(id='login-error', style={'color': 'red'})
     ], id='login-page', style={'display': 'block', 'textAlign': 'center'}),
 
+    # Dashboard Page
     html.Div([
         html.Div([
             html.Button("Déconnexion", id='logout-button', n_clicks=0, className="logout-button"),
@@ -149,19 +152,34 @@ app.layout = html.Div([
             html.H1("Tableau de bord", className='dashboard-title'),
         ]),
         html.Div(id='graphs-view', style={'display': 'block'}),
-        html.Div(id='table-view', style={'display': 'none'})
+        html.Div([
+            dcc.Dropdown(
+                id='mission-filter',
+                placeholder="Filtrer par mission",
+                options=[],
+                multi=False,
+                style={"width": "50%", "margin": "10px auto"}
+            ),
+            html.Div(id='table-view-content')
+        ], id='table-view', style={'display': 'none'})
     ], id='dashboard-page', style={'display': 'none'})
 ])
 
 @app.callback(
-    [Output('login-page', 'style'), Output('dashboard-page', 'style'), Output('login-error', 'children'), Output('graphs-view', 'children'), Output('table-view', 'children')],
+    [
+        Output('login-page', 'style'),
+        Output('dashboard-page', 'style'),
+        Output('login-error', 'children'),
+        Output('graphs-view', 'children'),
+        Output('mission-filter', 'options')
+    ],
     [Input('login-button', 'n_clicks'), Input('logout-button', 'n_clicks')],
     [State('input-identifier', 'value')]
 )
 def manage_login(n_login, n_logout, identifier):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return {'display': 'block'}, {'display': 'none'}, '', '', ''
+        return {'display': 'block'}, {'display': 'none'}, '', '', []
 
     if ctx.triggered[0]['prop_id'].startswith('login-button'):
         if identifier and identifier.strip():
@@ -191,42 +209,63 @@ def manage_login(n_login, n_logout, identifier):
                     labels={"Mission Level": "Niveau de Mission", "Nombre d'essai": "Nombre d'Essais"}
                 )
 
+                fig_time_spent = px.bar(
+                    time_spent,
+                    x="Mission Level", y="Time Spent (min)",
+                    title="Temps passé par niveau",
+                    labels={"Mission Level": "Niveau de Mission", "Time Spent (min)": "Temps Passé (min)"}
+                )
+
                 graphs = html.Div([
                     dcc.Graph(id='score-evolution', figure=fig_score_evolution),
-                    dcc.Graph(id='time-spent-graph', figure=px.bar(
-                        time_spent,
-                        x="Mission Level", y="Time Spent (min)",
-                        title="Temps passé par niveau",
-                        labels={"Mission Level": "Niveau de Mission", "Time Spent (min)": "Temps Passé (min)"}
-                    )),
+                    dcc.Graph(id='time-spent-graph', figure=fig_time_spent),
                     dcc.Graph(id='attempts-graph', figure=fig_attempts)
                 ])
 
-                table = dash_table.DataTable(
-                    id='progress-table',
-                    columns=[
-                        {"name": "Mission Level", "id": "Mission Level"},
-                        {"name": "Time Spent (min)", "id": "Time Spent (min)"},
-                        {"name": "Score", "id": "Score"},
-                        {"name": "Verb", "id": "Verb"},
-                        {"name": "Actor", "id": "Actor"},
-                        {"name": "Nombre d'essai", "id": "Nombre d'essai"}
-                    ],
-                    data=df.to_dict('records'),
-                    style_table={'height': '400px', 'overflowY': 'auto'},
-                    style_cell={'textAlign': 'center', 'padding': '10px'}
-                )
+                options = [{'label': level, 'value': level} for level in mission_levels]
 
-                return {'display': 'none'}, {'display': 'block'}, '', graphs, table
+                return {'display': 'none'}, {'display': 'block'}, '', graphs, options
             except Exception as e:
-                return {'display': 'block'}, {'display': 'none'}, "Identifiant invalide.", '', ''
+                return {'display': 'block'}, {'display': 'none'}, "Identifiant invalide.", '', []
         else:
-            return {'display': 'block'}, {'display': 'none'}, "Veuillez entrer un identifiant.", '', ''
+            return {'display': 'block'}, {'display': 'none'}, "Veuillez entrer un identifiant.", '', []
 
     if ctx.triggered[0]['prop_id'].startswith('logout-button'):
-        return {'display': 'block'}, {'display': 'none'}, '', '', ''
+        return {'display': 'block'}, {'display': 'none'}, '', '', []
 
-    return {'display': 'block'}, {'display': 'none'}, '', '', ''
+    return {'display': 'block'}, {'display': 'none'}, '', '', []
+
+@app.callback(
+    Output('table-view-content', 'children'),
+    [Input('mission-filter', 'value')],
+    [State('input-identifier', 'value')]
+)
+def filter_table(selected_mission, identifier):
+    if not identifier:
+        return html.Div("Aucune donnée disponible.")
+    try:
+        data = fetch_lrs_data(identifier)
+        df, _, _, _, _ = process_data(data)
+        if selected_mission:
+            df = df[df["Mission Level"] == selected_mission]
+
+        table = dash_table.DataTable(
+            id='progress-table',
+            columns=[
+                {"name": "Mission Level", "id": "Mission Level"},
+                {"name": "Time Spent (min)", "id": "Time Spent (min)"},
+                {"name": "Score", "id": "Score"},
+                {"name": "Verb", "id": "Verb"},
+                {"name": "Actor", "id": "Actor"},
+                {"name": "Nombre d'essai", "id": "Nombre d'essai"}
+            ],
+            data=df.to_dict('records'),
+            style_table={'height': '400px', 'overflowY': 'auto'},
+            style_cell={'textAlign': 'center', 'padding': '10px'}
+        )
+        return table
+    except Exception as e:
+        return html.Div("Erreur lors de la récupération des données.")
 
 @app.callback(
     [Output('graphs-view', 'style'), Output('table-view', 'style')],
