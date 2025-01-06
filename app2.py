@@ -8,6 +8,12 @@ import warnings
 
 warnings.filterwarnings("ignore", message=".*NotOpenSSLWarning.*")
 
+
+from score import extract_scores
+
+
+scores_max = extract_scores("Levels")
+
 def fetch_lrs_data(identifier):
     endpoint = "https://lrsels.lip6.fr/data/xAPI/statements"
     headers = {"X-Experience-API-Version": "1.0.3"}
@@ -92,10 +98,13 @@ def process_data(data):
             continue
 
         avg_score_by_level = {
-            level: round(sum(scores) / len(scores)) if len(scores) > 0 else None
+            level: round((sum(scores) / len(scores)) / scores_max.get("Infiltration", {}).get(level, 1), 2)
+            if len(scores) > 0 and scores_max.get("Infiltration", {}).get(level, 1) > 0 else None
             for level, scores in score_by_level.items()
         }
 
+        
+   
     df = pd.DataFrame(records)
     df['Timestamp'] = pd.to_datetime(df['Timestamp'])
     return df, list(all_mission_levels), completed_counts, avg_score_by_level, score_by_level
@@ -120,7 +129,7 @@ def calculate_time_per_level(df):
         time_spent = time_spent[time_spent["Time Spent (min)"] <= threshold]
 
     print("Contenu final de time_spent :")
-    print(time_spent)
+   # print(time_spent)
 
     return time_spent
 
@@ -187,6 +196,13 @@ def manage_login(n_login, n_logout, identifier):
             try:
                 data = fetch_lrs_data(identifier)
                 df, mission_levels, completed_counts, avg_score_by_level, score_by_level = process_data(data)
+                print(avg_score_by_level)
+                count = '01'
+                for mission, score in avg_score_by_level.items():
+                    for niveau, score_max in scores_max["Infiltration"].items():
+                        if mission == niveau:
+                            avg_score_by_level[mission] = round((score / score_max) * 100, 1) + 1
+                        
 
                 time_spent = calculate_time_per_level(df)
                 time_spent_dict = time_spent.set_index("Mission Level")["Time Spent (min)"].to_dict()
@@ -196,7 +212,7 @@ def manage_login(n_login, n_logout, identifier):
 
                 sorted_scores = prepare_score_data({level: (score if score is not None else 0) for level, score in avg_score_by_level.items()}, mission_levels)
 
-                fig_score_evolution = px.line(
+                fig_score_evolution = px.bar(
                     pd.DataFrame({"Mission Level": list(sorted_scores.keys()), "Average Score": list(sorted_scores.values())}),
                     x="Mission Level", y="Average Score",
                     title="Évolution des scores par niveau de mission",

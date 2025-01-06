@@ -28,8 +28,8 @@ def extract_scores(base_dir):
                             three_stars = score_element.get("threeStars")
                             if three_stars is not None:
                                 # Enregistrer le score max dans le dictionnaire
-                                level_name = os.path.splitext(file)[0]
-                                folder_scores[level_name] = int(three_stars)
+                                mission_name = os.path.splitext(file)[0].replace("Niveau", "mission")
+                                folder_scores[mission_name] = int(three_stars)
                     except ET.ParseError:
                         print(f"Erreur de parsing dans le fichier : {file_path}")
 
@@ -40,10 +40,11 @@ def extract_scores(base_dir):
 
 # Exemple d'utilisation
 base_directory = "Levels"
-scores = extract_scores(base_directory)
+scores_max = extract_scores(base_directory)
+#print(scores_max)
 
 # Afficher les résultats
-for folder, score_dict in scores.items():
-    print(f"Dossier: {folder}")
-    for level, score in score_dict.items():
-        print(f"  {level}: {score}")
+# for folder, score_dict in scores.items():
+#     print(f"Dossier: {folder}")
+#     for mission, score in score_dict.items():
+#         print(f"  {mission}: {score}")
