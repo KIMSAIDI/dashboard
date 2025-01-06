@@ -17,9 +17,60 @@ html, body {
 .header-container {
     display: flex;
     justify-content: space-between;
-    padding: 10px;
+    padding: 40px;
     background-color: #11BBBC;
     border-bottom: 2px solid #11BBBC;
+}
+
+/* Bouton de déconnexion */
+
+.logout-button {
+  align-items: center;
+  appearance: none;
+  background-color: #003030;
+  border-radius: 4px;
+  border-width: 0;
+ box-shadow: #000606 0 4px 8px, #000606 0 7px 13px -3px, #003030 0 -3px 0 inset;
+  box-sizing: border-box;
+  color: white;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: "JetBrains Mono",monospace;
+  height: 48px;
+  justify-content: center;
+  line-height: 1;
+  list-style: none;
+  overflow: hidden;
+  padding-left: 16px;
+  padding-right: 16px;
+    position: static;
+  top: 10px;
+  right: 40px;
+  text-align: center;
+  text-decoration: none;
+  transition: box-shadow .15s,transform .15s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  will-change: box-shadow,transform;
+  font-size: 18px;
+
+}
+
+.logout-button:focus {
+  box-shadow: #003030 0 0 0 1.5px inset, #000606 0 2px 4px, #000606 0 7px 13px -3px, #003030 0 -3px 0 inset;
+}
+
+.logout-button:hover {
+  box-shadow: #000606 0 4px 8px, #000606 0 7px 13px -3px, #003030 0 -3px 0 inset;
+    color: #11BBBC;
+}
+
+.toggle-view-button:active {
+  box-shadow:#000606 0 3px 7px inset;
+  transform: translateY(2px);
+    color: #11BBBC;
 }
 
 /* Bouton de basculement entre les vues */
@@ -43,8 +94,9 @@ html, body {
   overflow: hidden;
   padding-left: 16px;
   padding-right: 16px;
-  position: relative;
-  text-align: left;
+    position: relative;
+  left: 75%;
+  text-align: center;
   text-decoration: none;
   transition: box-shadow .15s,transform .15s;
   user-select: none;
@@ -53,6 +105,7 @@ html, body {
   white-space: nowrap;
   will-change: box-shadow,transform;
   font-size: 18px;
+
 }
 
 .toggle-view-button:focus {
@@ -61,12 +114,15 @@ html, body {
 
 .toggle-view-button:hover {
   box-shadow: #0F9696 0 4px 8px, #0F9696 0 7px 13px -3px, #11BBBC 0 -3px 0 inset;
+    color: #003030;
 }
 
 .toggle-view-button:active {
   box-shadow:#11BBBC 0 3px 7px inset;
   transform: translateY(2px);
+    color: #003030;
 }
+
 
 /* Bouton avec l'ID */
 
@@ -113,6 +169,17 @@ html, body {
     box-sizing: border-box;
     text-transform: uppercase;
     text-shadow: 5px 5px 5px #003030;
+}
+
+.dashboard-mission-title {
+    box-shadow: #000606 0 3px 7px inset;
+    background-color: white;
+    color: #003030;
+    padding: 20px;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+    text-transform: uppercase;
 }
 
 .dashboard-container {
