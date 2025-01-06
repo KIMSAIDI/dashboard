@@ -153,6 +153,7 @@ app.layout = html.Div([
         ]),
         html.Div(id='graphs-view', style={'display': 'block'}),
         html.Div([
+            html.H2("Analyse ta progression sur chaque niveau.", className='dashboard-mission-title'),
             dcc.Dropdown(
                 id='mission-filter',
                 placeholder="Filtrer par mission",
