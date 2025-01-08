@@ -5,6 +5,8 @@ from dash import dcc, html, dash_table
 from dash.dependencies import Input, Output, State
 import plotly.express as px
 import warnings
+import plotly.graph_objects as go
+
 
 warnings.filterwarnings("ignore", message=".*NotOpenSSLWarning.*")
 
@@ -227,50 +229,91 @@ def manage_login(n_login, n_logout, identifier):
 
                 sorted_scores = prepare_score_data({level: (score if score is not None else 0) for level, score in avg_score_by_level.items()}, mission_levels)
 
+                mission_levels = sorted(mission_levels)
+
+                
+                # Graphique pour l'évolution des scores
+                sorted_scores_df = pd.DataFrame({
+                    "Mission Level": list(sorted_scores.keys()),
+                    "Average Score": list(sorted_scores.values())
+                }).sort_values(by="Mission Level")
                 fig_score_evolution = px.line(
-                    pd.DataFrame({"Mission Level": list(sorted_scores.keys()), "Average Score": list(sorted_scores.values())}),
-                    x="Mission Level", 
+                    sorted_scores_df,
+                    x="Mission Level",
                     y="Average Score",
                     title="Évolution des scores par niveau de mission",
                     labels={"Mission Level": "Niveau de Mission", "Average Score": "Score Moyen (%)"},
-                    markers=True  # Ajout de marqueurs pour une meilleure lisibilité
+                    markers=True,
+                    template="seaborn"
                 )
+                fig_score_evolution.update_layout(yaxis_tickformat=".1f%%", yaxis=dict(range=[0, 105]))
 
-                # Mise en forme de l'axe Y et ajout des limites (0 à 100)
-                fig_score_evolution.update_layout(
-                    yaxis_tickformat=".1f%%",  # Affiche les valeurs en pourcentage
-                    yaxis=dict(range=[0, 105]),  # Limite l'axe Y entre 0 et 105
-                    title={
-                        'text': "Évolution des scores par niveau de mission",
-                        'x': 0.5,
-                        'xanchor': 'center'
-                    }
-                )
-
-
-
+                # Graphique pour le nombre d'essais
+                attempts_data = pd.DataFrame({
+                    "Mission Level": list(score_by_level.keys()),
+                    "Nombre d'essai": [len(scores) for scores in score_by_level.values()]
+                }).sort_values(by="Mission Level")
                 fig_attempts = px.bar(
-                    pd.DataFrame({"Mission Level": list(score_by_level.keys()), "Nombre d'essai": [len(scores) for scores in score_by_level.values()]}),
-                    x="Mission Level", y="Nombre d'essai",
-                    title="Nombre d'essais par niveau de mission",
-                    labels={"Mission Level": "Niveau de Mission", "Nombre d'essai": "Nombre d'Essais"}
+                    attempts_data,
+                    x="Nombre d'essai",
+                    y="Mission Level",
+                    orientation='h',
+                    title="Nombre d'essais par niveau",
+                    labels={"Mission Level": "Niveau de Mission", "Nombre d'essai": "Nombre d'Essais"},
+                    color="Nombre d'essai",
+                    color_continuous_scale="Peach"
+                    
                 )
 
+
+                # Graphique pour le temps passé
+                
+                # Trier les données du temps passé par niveau de mission
+                # Trier les missions par ordre de mission
+                time_spent_sorted = time_spent.sort_values(by="Mission Level")  # Tri par Mission Level (ordre croissant)
+
+                # Créer un graphique en barres horizontales
                 fig_time_spent = px.bar(
-                    time_spent,
-                    x="Mission Level", y="Time Spent (min)",
+                    time_spent_sorted,
+                    x="Time Spent (min)",
+                    y="Mission Level",
+                    orientation='h',
                     title="Temps passé par niveau",
-                    labels={"Mission Level": "Niveau de Mission", "Time Spent (min)": "Temps Passé (min)"}
+                    labels={"Mission Level": "Niveau de Mission", "Time Spent (min)": "Temps Passé (min)"},
+                    color="Time Spent (min)",
+                    color_continuous_scale="Blugrn"  # Palette de couleurs avec des tons plus contrastés
                 )
 
-                graphs = html.Div([
-                    dcc.Graph(id='score-evolution', figure=fig_score_evolution),
-                    dcc.Graph(id='time-spent-graph', figure=fig_time_spent),
-                    dcc.Graph(id='attempts-graph', figure=fig_attempts)
-                ])
-                # pour trier les niveaux
-                mission_levels = sorted(mission_levels)
+                # Ajuster le layout pour s'assurer que les missions sont bien triées
+                fig_time_spent.update_layout(
+                    yaxis=dict(categoryorder="array", categoryarray=time_spent_sorted["Mission Level"]),
+                    template="seaborn"  # Thème clair pour une meilleure lisibilité
+                )
 
+
+
+
+                # Intégrer les graphiques
+                graphs = html.Div([
+                    html.Div([
+                        html.Div("Évolution des scores par niveau de mission", className="graph-title"),
+                        dcc.Graph(id='score-evolution', figure=fig_score_evolution)
+                    ], className="graph-container"),
+
+                    html.Div([
+                        html.Div("Nombre d'essais par niveau", className="graph-title"),
+                        dcc.Graph(id='attempts-graph', figure=fig_attempts)
+                    ], className="graph-container"),
+
+                    html.Div([
+                        html.Div("Temps passé par niveau", className="graph-title"),
+                        dcc.Graph(id='time-spent-graph', figure=fig_time_spent)
+                    ], className="graph-container"),
+                ])
+
+
+                # pour trier les niveaux
+               
                 options = [{'label': level, 'value': level} for level in mission_levels]
 
                 return {'display': 'none'}, {'display': 'block'}, '', graphs, options
