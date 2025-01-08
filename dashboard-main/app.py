@@ -323,13 +323,35 @@ def filter_table(selected_mission, identifier):
         else:
             mission_scores = df["Score"]
         
-        if selected_mission in scores_max["Infiltration"]:
-            print(f"selected_mission: {selected_mission}, "
-                f"score_max: {scores_max['Infiltration'][selected_mission]}, "
-                f"mission_scores.max(): {mission_scores.max()}")
-        if mission_scores.min() is not None:
-            print(f"mission_scores.min(): {mission_scores.min()}")
+        # if selected_mission in scores_max["Infiltration"]:
+        #     print(f"selected_mission: {selected_mission}, "
+        #         f"score_max: {scores_max['Infiltration'][selected_mission]}, "
+        #         f"mission_scores.max(): {mission_scores.max()}")
+        # if mission_scores.min() is not None:
+        #     print(f"mission_scores.min(): {mission_scores.min()}")
 
+        # stats_data = {
+        #     "Score le plus haut": (
+        #         # scores_max["Infiltration"][selected_mission]
+        #         # if selected_mission in scores_max["Infiltration"]
+        #         # and mission_scores.max() is not None
+        #         # and scores_max["Infiltration"][selected_mission] >= mission_scores.max()
+        #         # else mission_scores.max()
+        #         # if mission_scores.max() is not None
+        #         # else None
+        #         mission_scores.max()
+        #         if mission_scores.max() is not None
+        #         else None
+        #     ),
+        #     "Score Moyen": round(mission_scores.mean()) if not mission_scores.empty else None,
+        #     "Score le plus bas obtenu": (
+        #         mission_scores.min()
+        #         if mission_scores.min() is not None
+        #         else None
+        #     )
+        # }
+        
+        
         stats_data = {
             "Score le plus haut": (
                 scores_max["Infiltration"][selected_mission]
@@ -341,12 +363,9 @@ def filter_table(selected_mission, identifier):
                 else None
             ),
             "Score Moyen": round(mission_scores.mean()) if not mission_scores.empty else None,
-            "Score le plus bas obtenu": (
-                mission_scores.min()
-                if mission_scores.min() is not None
-                else None
-            )
+            "Score le plus bas": mission_scores.min() if not mission_scores.empty else None
         }
+
 
 
         stats_table = dash_table.DataTable(
