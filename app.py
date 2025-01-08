@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore", message=".*NotOpenSSLWarning.*")
 
 from score import extract_scores
 scores_max = extract_scores("Levels")
-scores_max["Infiltration"]["mission08"] = 3976 # à remplacer par la vrai valeur
+scores_max["Infiltration"]["mission08"] = 3976 # pas de valeur dans le .xml donc obligé de le faire à la main
 
 
 def fetch_lrs_data(identifier):
@@ -268,6 +268,8 @@ def manage_login(n_login, n_logout, identifier):
                     dcc.Graph(id='time-spent-graph', figure=fig_time_spent),
                     dcc.Graph(id='attempts-graph', figure=fig_attempts)
                 ])
+                # pour trier les niveaux
+                mission_levels = sorted(mission_levels)
 
                 options = [{'label': level, 'value': level} for level in mission_levels]
 
@@ -294,6 +296,7 @@ def filter_table(selected_mission, identifier):
     try:
         data = fetch_lrs_data(identifier)
         df, _, _, _, score_by_level = process_data(data)
+        print("selected_mission :", selected_mission)
 
         # Filtrer pour ne garder que les lignes avec un score non nul
         df = df[df['Score'].notna() & (df['Score'] != 0)]
@@ -323,34 +326,7 @@ def filter_table(selected_mission, identifier):
         else:
             mission_scores = df["Score"]
         
-        # if selected_mission in scores_max["Infiltration"]:
-        #     print(f"selected_mission: {selected_mission}, "
-        #         f"score_max: {scores_max['Infiltration'][selected_mission]}, "
-        #         f"mission_scores.max(): {mission_scores.max()}")
-        # if mission_scores.min() is not None:
-        #     print(f"mission_scores.min(): {mission_scores.min()}")
-
-        # stats_data = {
-        #     "Score le plus haut": (
-        #         # scores_max["Infiltration"][selected_mission]
-        #         # if selected_mission in scores_max["Infiltration"]
-        #         # and mission_scores.max() is not None
-        #         # and scores_max["Infiltration"][selected_mission] >= mission_scores.max()
-        #         # else mission_scores.max()
-        #         # if mission_scores.max() is not None
-        #         # else None
-        #         mission_scores.max()
-        #         if mission_scores.max() is not None
-        #         else None
-        #     ),
-        #     "Score Moyen": round(mission_scores.mean()) if not mission_scores.empty else None,
-        #     "Score le plus bas obtenu": (
-        #         mission_scores.min()
-        #         if mission_scores.min() is not None
-        #         else None
-        #     )
-        # }
-        
+       
         
         stats_data = {
             "Score le plus haut": (
@@ -363,7 +339,7 @@ def filter_table(selected_mission, identifier):
                 else None
             ),
             "Score Moyen": round(mission_scores.mean()) if not mission_scores.empty else None,
-            "Score le plus bas": mission_scores.min() if not mission_scores.empty else None
+            "Score le plus bas obtenu": mission_scores.min() if not mission_scores.empty else None
         }
 
 
@@ -373,7 +349,7 @@ def filter_table(selected_mission, identifier):
             columns=[
                 {"name": "Score le plus haut", "id": "Score le plus haut"},
                 {"name": "Score Moyen", "id": "Score Moyen"},
-                {"name": "Score le plus bas", "id": "Score le plus bas"},
+                {"name": "Score le plus bas obtenu", "id": "Score le plus bas obtenu"},
             ],
             style_data_conditional=[
                 {
@@ -382,7 +358,7 @@ def filter_table(selected_mission, identifier):
                     'color': 'white',  # Couleur du texte
                 },
                 {
-                    'if': {'column_id': 'Score le plus bas'},
+                    'if': {'column_id': 'Score le plus bas obtenu'},
                     'backgroundColor': 'red',  # Couleur verte
                     'color': 'white',  # Couleur du texte
                 }
@@ -390,7 +366,7 @@ def filter_table(selected_mission, identifier):
             data=[{
                 "Score le plus haut": stats_data["Score le plus haut"],
                 "Score Moyen": stats_data["Score Moyen"],
-                "Score le plus bas": stats_data["Score le plus bas"]
+                "Score le plus bas obtenu": stats_data["Score le plus bas obtenu"]
             }],
             style_table={'height': '100%', 'overflowY': 'auto', 'margin': '10px', 'align-items': 'center'},
             style_cell={'textAlign': 'center'}
