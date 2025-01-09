@@ -102,14 +102,6 @@ def process_data(data):
             level: round(sum(scores) / len(scores)) if len(scores) > 0 else None
             for level, scores in score_by_level.items()
         }
-       # print("avg_score_by_level :", avg_score_by_level)
-       #² print("scores_max['Infiltration'] :", scores_max["Infiltration"])
-
-        # # Remise à niveau des scores pour les transformer en pourcentages
-        # for mission, score in avg_score_by_level.items():
-        #     for niveau, score_max in scores_max["Infiltration"].items():
-        #         if mission == niveau and score_max > 0:
-        #             avg_score_by_level[mission] = round((score / score_max) * 100, 1)
 
 
     df = pd.DataFrame(records)
@@ -124,9 +116,10 @@ def calculate_time_per_level(df):
     time_spent = (
         df.dropna(subset=["Mission Level"])
         .groupby("Mission Level")["Timestamp"]
-        .agg(lambda x: (x.max() - x.min()).total_seconds() / 60)
+        .agg(lambda x: round((x.max() - x.min()).total_seconds() / 60, 2))  # Arrondi à 2 décimales
         .reset_index(name="Time Spent (min)")
     )
+
 
     threshold = 24 * 60
     anomalies = time_spent[time_spent["Time Spent (min)"] > threshold]
@@ -235,8 +228,9 @@ def manage_login(n_login, n_logout, identifier):
                 # Graphique pour l'évolution des scores
                 sorted_scores_df = pd.DataFrame({
                     "Mission Level": list(sorted_scores.keys()),
-                    "Average Score": list(sorted_scores.values())
+                    "Average Score": [round(value, 2) for value in sorted_scores.values()]
                 }).sort_values(by="Mission Level")
+
                 fig_score_evolution = px.line(
                     sorted_scores_df,
                     x="Mission Level",
@@ -383,18 +377,22 @@ def filter_table(selected_mission, identifier):
         # Filtrer pour ne garder que les lignes avec un score non nul
         df = df[df['Score'].notna() & (df['Score'] != 0)]
 
+        # Arrondir tous les scores à 2 décimales
+        df["Score"] = df["Score"].apply(lambda x: round(x, 2) if pd.notnull(x) else x)
+
         # Ajouter une colonne "Essai" pour le comptage des essais
         df['Essai'] = df.groupby('Mission Level').cumcount() + 1
 
         if selected_mission:
             df = df[df["Mission Level"] == selected_mission]
-            
+
+        # Ajouter la colonne Feedback
         df["Feedback"] = df.apply(
             lambda row: generate_feedback(row["Score"], scores_max["Infiltration"].get(row["Mission Level"], None)),
             axis=1
         )
 
-        # Tableau pour afficher le Score et le Nombre d'Essai
+        # Tableau pour afficher le Score, le Nombre d'Essai, et le Feedback
         score_table = dash_table.DataTable(
             id='score-table',
             columns=[
@@ -407,59 +405,51 @@ def filter_table(selected_mission, identifier):
             style_cell={'textAlign': 'center', 'font-size': '16px'}
         )
 
-        # Calcul des statistiques (Score moyen, plus haut et plus bas)
+        # Calcul des statistiques (Score moyen, le plus haut, et le plus bas)
         if selected_mission:
             mission_scores = df[df["Mission Level"] == selected_mission]["Score"]
         else:
             mission_scores = df["Score"]
-        
-       
-        
+
         stats_data = {
             "Score le plus haut": (
-                scores_max["Infiltration"][selected_mission]
-                if selected_mission in scores_max["Infiltration"]
-                and mission_scores.max() is not None
-                and scores_max["Infiltration"][selected_mission] >= mission_scores.max()
-                else mission_scores.max()
-                if mission_scores.max() is not None
-                else None
+                round(mission_scores.max(), 2) if not mission_scores.empty else None
             ),
-            "Score Moyen": round(mission_scores.mean()) if not mission_scores.empty else None,
-            "Score le plus bas obtenu": mission_scores.min() if not mission_scores.empty else None
+            "Score Moyen": (
+                round(mission_scores.mean(), 2) if not mission_scores.empty else None
+            ),
+            "Score le plus bas obtenu": (
+                round(mission_scores.min(), 2) if not mission_scores.empty else None
+            )
         }
 
-
-
+        # Tableau pour les statistiques
         stats_table = dash_table.DataTable(
             id='stats-table',
             columns=[
                 {"name": "Score le plus haut", "id": "Score le plus haut"},
                 {"name": "Score Moyen", "id": "Score Moyen"},
-                {"name": "Score le plus bas obtenu", "id": "Score le plus bas obtenu"},
+                {"name": "Score le plus bas obtenu", "id": "Score le plus bas obtenu"}
             ],
+            data=[stats_data],
+            style_table={'height': '100%', 'overflowY': 'auto', 'margin': '10px', 'align-items': 'center'},
+            style_cell={'textAlign': 'center', 'font-size': '16px'},
             style_data_conditional=[
                 {
                     'if': {'column_id': 'Score le plus haut'},
-                    'backgroundColor': '#28a745',  # Couleur verte
-                    'color': 'white',  # Couleur du texte
+                    'backgroundColor': '#28a745',  # Fond vert
+                    'color': 'white'  # Texte blanc
                 },
                 {
                     'if': {'column_id': 'Score le plus bas obtenu'},
-                    'backgroundColor': 'red',  # Couleur verte
-                    'color': 'white',  # Couleur du texte
+                    'backgroundColor': 'red',  # Fond rouge
+                    'color': 'white'  # Texte blanc
                 }
-            ],
-            data=[{
-                "Score le plus haut": stats_data["Score le plus haut"],
-                "Score Moyen": stats_data["Score Moyen"],
-                "Score le plus bas obtenu": stats_data["Score le plus bas obtenu"]
-            }],
-            style_table={'height': '100%', 'overflowY': 'auto', 'margin': '10px', 'align-items': 'center'},
-            style_cell={'textAlign': 'center'}
+            ]
         )
 
-        # Calcul du score moyen ou sélection du score le plus récent
+
+        # Générer le feedback du penguin
         if not df.empty:
             recent_score = df["Score"].iloc[-1]  # Dernier score enregistré
             max_score = scores_max["Infiltration"].get(df["Mission Level"].iloc[-1], None)
@@ -470,7 +460,7 @@ def filter_table(selected_mission, identifier):
                 "image": "/assets/penguin_idle.png"
             }
 
-        # Créer le composant pour le penguin
+        # Composant pour le penguin
         penguin_feedback = html.Div([
             html.Img(
                 src=penguin_feedback_data["image"],
@@ -498,9 +488,7 @@ def filter_table(selected_mission, identifier):
             )
         ])
 
-
-
-        # Retourner les tableaux et le penguin
+        # Retourner les tableaux et le feedback du penguin
         return html.Div([
             html.Div(stats_table, className="table-container"),
             html.Div(score_table, className="table-container"),
@@ -511,7 +499,7 @@ def filter_table(selected_mission, identifier):
         print(f"Erreur lors de la récupération des données : {e}")
         return html.Div("Erreur lors de la récupération des données.")
 
-
+    
 @app.callback(
     [Output('graphs-view', 'style'), Output('table-view', 'style')],
     [Input('toggle-view-button', 'n_clicks')]
