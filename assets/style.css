@@ -318,3 +318,15 @@ font-size: 18px;
 .graph-content {
   padding: 10px;
 }
+
+.penguin-feedback img {
+  border-radius: 10%; /* Optionnel : pour arrondir légèrement l'image */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Ombre douce */
+}
+
+.penguin-feedback div {
+  font-family: "JetBrains Mono", monospace; /* Assure une cohérence avec les autres textes */
+  margin-top: 10px;
+}
+
+

@@ -328,6 +328,45 @@ def manage_login(n_login, n_logout, identifier):
     return {'display': 'block'}, {'display': 'none'}, '', '', []
 
 
+
+def generate_feedback(score, max_score):
+    if score is None or max_score is None or max_score == 0:
+        return "☆ ☆ ☆"  # Pas de score ou score invalide
+    percentage = (score / max_score) * 100
+    if percentage >= 90:
+        return "★ ★ ★"
+    elif percentage >= 70:
+        return "★ ★ ☆"
+    else:
+        return "★ ☆ ☆"
+
+
+
+def get_penguin_feedback(score, max_score):
+    if score is None or max_score is None or max_score == 0:
+        return {
+            "comment": "Ne vous découragez pas, vous y arriverez ! 🐧",
+            "image": "/assets/penguin_sad.png"
+        }
+    percentage = (score / max_score) * 100
+    if percentage >= 90:
+        return {
+            "comment": "Excellent travail ! Vous êtes un expert ! 🐧",
+            "image": "/assets/penguin_happy.png"
+        }
+    elif percentage >= 70:
+        return {
+            "comment": "Bon travail, mais vous pouvez encore progresser ! 🐧",
+            "image": "/assets/penguin_neutral.png"
+        }
+    else:
+        return {
+            "comment": "Ne vous découragez pas, vous y arriverez ! 🐧",
+            "image": "/assets/penguin_sad.png"
+        }
+
+
+
 @app.callback(
     Output('table-view-content', 'children'),
     [Input('mission-filter', 'value')],
@@ -349,6 +388,11 @@ def filter_table(selected_mission, identifier):
 
         if selected_mission:
             df = df[df["Mission Level"] == selected_mission]
+            
+        df["Feedback"] = df.apply(
+            lambda row: generate_feedback(row["Score"], scores_max["Infiltration"].get(row["Mission Level"], None)),
+            axis=1
+        )
 
         # Tableau pour afficher le Score et le Nombre d'Essai
         score_table = dash_table.DataTable(
@@ -360,7 +404,7 @@ def filter_table(selected_mission, identifier):
             ],
             data=df.to_dict('records'),
             style_table={'height': '100%', 'overflowY': 'auto', 'margin': '10px', 'align-items': 'center'},
-            style_cell={'textAlign': 'center'}
+            style_cell={'textAlign': 'center', 'font-size': '16px'}
         )
 
         # Calcul des statistiques (Score moyen, plus haut et plus bas)
@@ -415,10 +459,54 @@ def filter_table(selected_mission, identifier):
             style_cell={'textAlign': 'center'}
         )
 
-        return html.Div([
-            stats_table,
-            score_table
+        # Calcul du score moyen ou sélection du score le plus récent
+        if not df.empty:
+            recent_score = df["Score"].iloc[-1]  # Dernier score enregistré
+            max_score = scores_max["Infiltration"].get(df["Mission Level"].iloc[-1], None)
+            penguin_feedback_data = get_penguin_feedback(recent_score, max_score)
+        else:
+            penguin_feedback_data = {
+                "comment": "Aucun score disponible pour l'instant. Essayez une mission ! 🐧",
+                "image": "/assets/penguin_idle.png"
+            }
+
+        # Créer le composant pour le penguin
+        penguin_feedback = html.Div([
+            html.Img(
+                src=penguin_feedback_data["image"],
+                style={
+                    "width": "200px",
+                    "float": "left",
+                    "margin": "20px"
+                }
+            ),
+            html.Div(
+                penguin_feedback_data["comment"],
+                style={
+                    "text-align": "center",
+                    "font-size": "18px",
+                    "font-weight": "bold",
+                    "color": "#ffffff",
+                    "background-color": "#005656",
+                    "padding": "10px",
+                    "border-radius": "10px",
+                    "margin-top": "10px",
+                    "width": "fit-content",
+                    "margin-left": "auto",
+                    "margin-right": "auto"
+                }
+            )
         ])
+
+
+
+        # Retourner les tableaux et le penguin
+        return html.Div([
+            html.Div(stats_table, className="table-container"),
+            html.Div(score_table, className="table-container"),
+            penguin_feedback
+        ])
+
     except Exception as e:
         print(f"Erreur lors de la récupération des données : {e}")
         return html.Div("Erreur lors de la récupération des données.")
