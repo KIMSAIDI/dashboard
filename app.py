@@ -113,14 +113,21 @@ def calculate_time_per_level(df):
         print("Aucun niveau détecté dans les données.")
         return pd.DataFrame(columns=["Mission Level", "Time Spent (min)"])
 
-    time_spent = (
-        df.dropna(subset=["Mission Level"])
-        .groupby("Mission Level")["Timestamp"]
-        .agg(lambda x: round((x.max() - x.min()).total_seconds() / 60, 2))  # Arrondi à 2 décimales
-        .reset_index(name="Time Spent (min)")
-    )
+    # Trier par niveau et timestamp
+    df = df.sort_values(by=["Mission Level", "Timestamp"])
 
+    # Calculer les durées par sessions
+    session_times = []
+    for level, group in df.groupby("Mission Level"):
+        group = group.reset_index(drop=True)
+        time_diffs = group["Timestamp"].diff().dt.total_seconds() / 60  # Différences en minutes
+        time_diffs = time_diffs.fillna(0)  # Remplir les NaN pour la première ligne
+        total_time = time_diffs[time_diffs <= 60].sum()  # Ignorer les écarts > 60 minutes
+        session_times.append({"Mission Level": level, "Time Spent (min)": round(total_time, 2)})
 
+    time_spent = pd.DataFrame(session_times)
+
+    # Filtrer les anomalies (exemple : sessions > 24 heures)
     threshold = 24 * 60
     anomalies = time_spent[time_spent["Time Spent (min)"] > threshold]
     if not anomalies.empty:
@@ -128,10 +135,9 @@ def calculate_time_per_level(df):
         print(anomalies)
         time_spent = time_spent[time_spent["Time Spent (min)"] <= threshold]
 
-    #print("Contenu final de time_spent :")
-    #print(time_spent)
-
     return time_spent
+
+
 
 def prepare_score_data(avg_score_by_level, all_levels):
     scores_with_zeros = {level: avg_score_by_level.get(level, 0) for level in all_levels}
@@ -255,7 +261,7 @@ def manage_login(n_login, n_logout, identifier):
                     title="Nombre d'essais par niveau",
                     labels={"Mission Level": "Niveau de Mission", "Nombre d'essai": "Nombre d'Essais"},
                     color="Nombre d'essai",
-                    color_continuous_scale="Peach"
+                    color_continuous_scale="Burg"
                     
                 )
 
