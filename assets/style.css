@@ -6,7 +6,7 @@ html {
   background-image: url('background_login.png'); /* Remplacez par le chemin de votre image */
   background-size: cover; /* Cette propriété permet d'étirer l'image pour couvrir tout le fond */
   background-position: center; /* Centrer l'image de fond */
-  background-repeat: no-repeat; /* Empêche l'image de se répéter */
+  background-repeat: repeat; /* Empêche l'image de se répéter */
 }
 
 body {
