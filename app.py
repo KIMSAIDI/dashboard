@@ -217,6 +217,7 @@ def manage_login(n_login, n_logout, identifier):
                             elif score > score_max:
                                 avg_score_by_level[mission] = 100
                             else :
+                               
                                 avg_score_by_level[mission] = round((score / score_max) * 100, 1) 
                             
                 
@@ -419,7 +420,13 @@ def filter_table(selected_mission, identifier):
 
         stats_data = {
             "Score le plus haut": (
-                round(mission_scores.max(), 2) if not mission_scores.empty else None
+                scores_max["Infiltration"][selected_mission]
+                if selected_mission in scores_max["Infiltration"]
+                and mission_scores.max() is not None
+                and scores_max["Infiltration"][selected_mission] >= mission_scores.max()
+                else mission_scores.max()
+                if mission_scores.max() is not None
+                else None
             ),
             "Score Moyen": (
                 round(mission_scores.mean(), 2) if not mission_scores.empty else None
@@ -468,31 +475,38 @@ def filter_table(selected_mission, identifier):
 
         # Composant pour le penguin
         penguin_feedback = html.Div([
+            # Image du pingouin
             html.Img(
                 src=penguin_feedback_data["image"],
                 style={
-                    "width": "200px",
-                    "float": "left",
-                    "margin": "20px"
+                    "width": "350px",  # Ajustez la taille selon vos besoins
+                    "margin-right": "20px",  # Espace entre l'image et le texte
                 }
             ),
+            
+            # Texte de feedback
             html.Div(
                 penguin_feedback_data["comment"],
                 style={
                     "text-align": "center",
-                    "font-size": "18px",
+                    "font-size": "24px",  # Augmenté pour une meilleure visibilité
                     "font-weight": "bold",
                     "color": "#ffffff",
                     "background-color": "#005656",
-                    "padding": "10px",
-                    "border-radius": "10px",
-                    "margin-top": "10px",
+                    "padding": "20px",  # Augmenté pour plus d'espace autour du texte
+                    "border-radius": "15px",  # Bordure arrondie plus visible
                     "width": "fit-content",
-                    "margin-left": "auto",
-                    "margin-right": "auto"
+                    "border": "3px solid #ffffff",  # Bordure blanche pour contraster
                 }
             )
-        ])
+        ], style={
+            "display": "flex",
+            "align-items": "center",  # Centre l'image et le texte verticalement
+            "justify-content": "flex-start",  # Aligne les éléments à gauche
+            "gap": "20px",  # Ajoute un espacement constant entre les éléments
+            "margin-top": "10px"  # Ajout d'un espacement au-dessus
+        })
+
 
         # Retourner les tableaux et le feedback du penguin
         return html.Div([
