@@ -113,21 +113,21 @@ def calculate_time_per_level(df):
         print("Aucun niveau détecté dans les données.")
         return pd.DataFrame(columns=["Mission Level", "Time Spent (min)"])
 
-    # Trier par niveau et timestamp
+    # trier par niveau et timestamp
     df = df.sort_values(by=["Mission Level", "Timestamp"])
 
-    # Calculer les durées par sessions
+    # calculer les durées par sessions
     session_times = []
     for level, group in df.groupby("Mission Level"):
         group = group.reset_index(drop=True)
-        time_diffs = group["Timestamp"].diff().dt.total_seconds() / 60  # Différences en minutes
+        time_diffs = group["Timestamp"].diff().dt.total_seconds() / 60  # différences en minutes
         time_diffs = time_diffs.fillna(0)  # Remplir les NaN pour la première ligne
-        total_time = time_diffs[time_diffs <= 60].sum()  # Ignorer les écarts > 60 minutes
+        total_time = time_diffs[time_diffs <= 60].sum()  # on ignore les écarts > 60 minutes
         session_times.append({"Mission Level": level, "Time Spent (min)": round(total_time, 2)})
 
     time_spent = pd.DataFrame(session_times)
 
-    # Filtrer les anomalies (exemple : sessions > 24 heures)
+    # on filtre les anomalies (exemple : sessions > 24 heures)
     threshold = 24 * 60
     anomalies = time_spent[time_spent["Time Spent (min)"] > threshold]
     if not anomalies.empty:
@@ -207,7 +207,7 @@ def manage_login(n_login, n_logout, identifier):
                 data = fetch_lrs_data(identifier)
                 df, mission_levels, completed_counts, avg_score_by_level, score_by_level = process_data(data)
 
-                # #remise à niveau de tout les scores
+                # remise à niveau de tout les scores
                 for mission, score in avg_score_by_level.items():
                     for niveau, score_max in scores_max["Infiltration"].items():
                         if mission == niveau:
@@ -266,14 +266,10 @@ def manage_login(n_login, n_logout, identifier):
                     
                 )
 
-
-                # Graphique pour le temps passé
-                
-                # Trier les données du temps passé par niveau de mission
-                # Trier les missions par ordre de mission
+                # trier les missions par ordre de mission
                 time_spent_sorted = time_spent.sort_values(by="Mission Level")  # Tri par Mission Level (ordre croissant)
 
-                # Créer un graphique en barres horizontales
+                # un graphique en barres horizontales
                 fig_time_spent = px.bar(
                     time_spent_sorted,
                     x="Time Spent (min)",
@@ -282,19 +278,16 @@ def manage_login(n_login, n_logout, identifier):
                     title="Temps passé par niveau",
                     labels={"Mission Level": "Niveau de Mission", "Time Spent (min)": "Temps Passé (min)"},
                     color="Time Spent (min)",
-                    color_continuous_scale="Blugrn"  # Palette de couleurs avec des tons plus contrastés
+                    color_continuous_scale="Blugrn"  
                 )
 
-                # Ajuster le layout pour s'assurer que les missions sont bien triées
+                
                 fig_time_spent.update_layout(
                     yaxis=dict(categoryorder="array", categoryarray=time_spent_sorted["Mission Level"]),
-                    template="seaborn"  # Thème clair pour une meilleure lisibilité
+                    template="seaborn"  
                 )
 
-
-
-
-                # Intégrer les graphiques
+                
                 graphs = html.Div([
                     html.Div([
                         html.Div("Évolution des scores par niveau de mission", className="graph-title"),
@@ -380,26 +373,18 @@ def filter_table(selected_mission, identifier):
         data = fetch_lrs_data(identifier)
         df, _, _, _, score_by_level = process_data(data)
         print("selected_mission :", selected_mission)
-
-        # Filtrer pour ne garder que les lignes avec un score non nul
         df = df[df['Score'].notna() & (df['Score'] != 0)]
-
-        # Arrondir tous les scores à 2 décimales
         df["Score"] = df["Score"].apply(lambda x: round(x, 2) if pd.notnull(x) else x)
-
-        # Ajouter une colonne "Essai" pour le comptage des essais
         df['Essai'] = df.groupby('Mission Level').cumcount() + 1
 
         if selected_mission:
             df = df[df["Mission Level"] == selected_mission]
 
-        # Ajouter la colonne Feedback
+        # colonne Feedback
         df["Feedback"] = df.apply(
             lambda row: generate_feedback(row["Score"], scores_max["Infiltration"].get(row["Mission Level"], None)),
             axis=1
         )
-
-        # Tableau pour afficher le Score, le Nombre d'Essai, et le Feedback
         score_table = dash_table.DataTable(
             id='score-table',
             columns=[
@@ -412,7 +397,7 @@ def filter_table(selected_mission, identifier):
             style_cell={'textAlign': 'center', 'font-size': '16px'}
         )
 
-        # Calcul des statistiques (Score moyen, le plus haut, et le plus bas)
+       
         if selected_mission:
             mission_scores = df[df["Mission Level"] == selected_mission]["Score"]
         else:
@@ -450,21 +435,20 @@ def filter_table(selected_mission, identifier):
             style_data_conditional=[
                 {
                     'if': {'column_id': 'Score le plus haut'},
-                    'backgroundColor': '#28a745',  # Fond vert
-                    'color': 'white'  # Texte blanc
+                    'backgroundColor': '#28a745', 
+                    'color': 'white'  
                 },
                 {
                     'if': {'column_id': 'Score le plus bas obtenu'},
-                    'backgroundColor': 'red',  # Fond rouge
-                    'color': 'white'  # Texte blanc
+                    'backgroundColor': 'red',  
+                    'color': 'white'  
                 }
             ]
         )
 
-
-        # Générer le feedback du penguin
+        # feedback du penguin
         if not df.empty:
-            recent_score = df["Score"].iloc[-1]  # Dernier score enregistré
+            recent_score = df["Score"].iloc[-1]  
             max_score = scores_max["Infiltration"].get(df["Mission Level"].iloc[-1], None)
             penguin_feedback_data = get_penguin_feedback(recent_score, max_score)
         else:
@@ -473,42 +457,38 @@ def filter_table(selected_mission, identifier):
                 "image": "/assets/penguin_idle.png"
             }
 
-        # Composant pour le penguin
         penguin_feedback = html.Div([
-            # Image du pingouin
             html.Img(
                 src=penguin_feedback_data["image"],
                 style={
-                    "width": "350px",  # Ajustez la taille selon vos besoins
-                    "margin-right": "20px",  # Espace entre l'image et le texte
+                    "width": "350px", 
+                    "margin-right": "20px",  
                 }
             ),
             
-            # Texte de feedback
+            # feedback
             html.Div(
                 penguin_feedback_data["comment"],
                 style={
                     "text-align": "center",
-                    "font-size": "24px",  # Augmenté pour une meilleure visibilité
+                    "font-size": "24px",  
                     "font-weight": "bold",
                     "color": "#ffffff",
                     "background-color": "#005656",
-                    "padding": "20px",  # Augmenté pour plus d'espace autour du texte
-                    "border-radius": "15px",  # Bordure arrondie plus visible
+                    "padding": "20px",  
+                    "border-radius": "15px",  
                     "width": "fit-content",
-                    "border": "3px solid #ffffff",  # Bordure blanche pour contraster
+                    "border": "3px solid #ffffff", 
                 }
             )
         ], style={
             "display": "flex",
-            "align-items": "center",  # Centre l'image et le texte verticalement
-            "justify-content": "flex-start",  # Aligne les éléments à gauche
-            "gap": "20px",  # Ajoute un espacement constant entre les éléments
-            "margin-top": "10px"  # Ajout d'un espacement au-dessus
+            "align-items": "center", 
+            "justify-content": "flex-start",  
+            "gap": "20px",  
+            "margin-top": "10px"  
         })
 
-
-        # Retourner les tableaux et le feedback du penguin
         return html.Div([
             html.Div(stats_table, className="table-container"),
             html.Div(score_table, className="table-container"),
