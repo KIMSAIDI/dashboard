@@ -3,10 +3,10 @@ html {
   margin: 0px;
   padding: 0px;
   font-family: "JetBrains Mono",monospace;
-  background-image: url('background_login.png'); /* Remplacez par le chemin de votre image */
-  background-size: cover; /* Cette propriété permet d'étirer l'image pour couvrir tout le fond */
-  background-position: center; /* Centrer l'image de fond */
-  background-repeat: repeat; /* Empêche l'image de se répéter */
+  background-image: url('background_login.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: repeat;
 }
 
 body {
@@ -19,12 +19,12 @@ body {
 #app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100%; /* Assurez-vous que le conteneur occupe au moins toute la hauteur de la page */
-  padding-bottom: 50px; /* Ajoutez un padding en bas pour éviter que le contenu ne soit masqué par le footer */
+  min-height: 100%;
+  padding-bottom: 50px;
 }
 
 .footer {
-  height: 48px; /* Assure que la page occupe toute la hauteur */
+  height: 48px;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -299,16 +299,16 @@ font-size: 18px;
 
 
 .graph-container {
-  background-color: #1f2937; /* Couleur sombre */
+  background-color: #1f2937;
   border-radius: 10px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Ombre douce */
-  color: #ffffff; /* Texte blanc */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  color: #ffffff;
 }
 
 .graph-title {
-  color: #e5e7eb; /* Couleur claire pour les titres */
+  color: #e5e7eb;
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 10px;
@@ -320,12 +320,12 @@ font-size: 18px;
 }
 
 .penguin-feedback img {
-  border-radius: 10%; /* Optionnel : pour arrondir légèrement l'image */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Ombre douce */
+  border-radius: 10%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .penguin-feedback div {
-  font-family: "JetBrains Mono", monospace; /* Assure une cohérence avec les autres textes */
+  font-family: "JetBrains Mono", monospace;
   margin-top: 10px;
 }
 
